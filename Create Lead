@@ -1,0 +1,113 @@
+//Apex : Server Controller
+public class WorkshopAura {
+@auraenabled
+public static String createLead(Lead singleLead){
+system.debug('Contact : '+ singleLead);
+insert singleLead;
+return singleLead.id;
+}
+@auraenabled
+public static List<Lead> retrieveLeads(){
+System.debug('SOQL Working ');
+List<Lead> multiLead = [SELECT id, FirstName,LastName,Phone,Email,Company FROM Lead LIMIT 10];
+System.debug('Multi Lead : '+ multiLead);
+return multiLead;
+}
+}
+
+//Aura Component
+
+<aura:component controller="WorkshopAura" implements="force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome
+<aura:attribute name="sLead" type="Lead" default="
+{
+'sobjectType':'Lead',
+'FirstName':'',
+'LastName':'',
+'Phone':'',
+'Company':''
+}
+" />
+<aura:attribute name="leadList" type="Lead[]" />
+<aura:attribute name="createdLeadid" type="String" />
+<aura:handler name="init" value="{!this}" action="{!c.showLeads}" />
+<lightning:card variant="Narrow" title="Create Lead" iconName="standard:lead" footer="{!v.createdLeadid}">
+<aura:set attribute="actions">
+<lightning:button onclick="{!c.create}" label="Create" iconName="utility:apex" iconPosition="left" variant="brand" />
+</aura:set>
+<p class="slds-p-horizontal_small">
+<lightning:input value="{!v.sLead.FirstName}" name="First Name" label="first Name" placeholder="type here..."/>
+<lightning:input value="{!v.sLead.LastName}" name="Last Name" label="Last Name" placeholder="type here..." required="true"/>
+<lightning:input value="{!v.sLead.Company}" name="Company" label="Company" placeholder="type here..." required="true"/>
+<lightning:input value="{!v.sLead.Phone}" name="Phone" label="Phone" type="tel" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}" placeholder="34
+</p>
+</lightning:card>
+<table>
+<thead>
+<th>
+First Name
+</th>
+<th>
+Last Name
+</th>
+<th>
+Company
+</th>
+<th>
+Phone
+</th>
+<th>
+Email
+</th>
+</thead>
+<tbody>
+<aura:iteration items="{!v.leadList}" var="loopLead" indexVar="index">
+<tr>
+<td data-label="First Name" scope="row">
+{!loopLead.FirstName}
+</td>
+<td data-label="Last Name" scope="row">
+{!loopLead.LastName}
+</td>
+<td data-label="Company" scope="row">
+{!loopLead.Company}
+</td>
+<td data-label="Phone" scope="row">
+{!loopLead.Phone}
+</td>
+<td data-label="Email" scope="row">
+{!loopLead.Email}
+</td>
+</tr>
+</aura:iteration>
+</tbody>
+</table>
+</aura:component>
+
+//JavaScript: Lead Controller
+({
+create : function(component, event, helper) {
+var scon = component.get("v.sLead");
+// console.log("Contact first name : ",scon.FirstName);
+// console.log("Component",component);
+//
+//
+var serverController = component.get("c.createLead");
+serverController.setParams({'singleLead':scon});
+serverController.setCallback(this,
+function(response){
+component.set("v.createdLeadid",response.getReturnValue());
+});
+$A.enqueueAction(serverController);
+},
+showLeads : function(component,event,helper){
+var serverController = component.get("c.retrieveLeads");
+serverController.setCallback(this,function(res){
+component.set('v.leadList',res.getReturnValue());
+});
+$A.enqueueAction(serverController);
+}
+})
+//Aura App inside aura component
+<aura:application extends="force:slds">
+<c:WorkshopAura/>
+</aura:application>
